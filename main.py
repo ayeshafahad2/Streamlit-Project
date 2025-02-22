@@ -31,32 +31,6 @@ def save_data(df):
 # Load existing data
 df = load_data()
 
-# Apply custom background
-page_bg = """
-    <style>
-    body {
-        background-image: url("/images/design.jpeg");
-        background-size: cover;
-        background-attachment: fixed;
-    }
-    .sidebar .sidebar-content {
-        background: #FFDEE9; /* Light pink gradient */
-        padding: 20px;
-    }
-    .stTextInput, .stButton, .stFileUploader {
-        border-radius: 10px;
-    }
-    .stButton>button {
-        background: #ff4b4b; /* Red button */
-        color: white;
-        font-size: 18px;
-        border-radius: 10px;
-        padding: 10px;
-    }
-    </style>
-"""
-st.markdown(page_bg, unsafe_allow_html=True)
-
 # Streamlit UI
 st.title("🎉 Loved Ones' Special Dates Tracker")
 st.sidebar.header("💖 Add a Loved One")
@@ -65,7 +39,7 @@ st.sidebar.header("💖 Add a Loved One")
 name = st.sidebar.text_input("📌 Name")
 currentdate = st.sidebar.text_input("📆 Current Date (YYYY-MM-DD)")
 special_date = st.sidebar.text_input("🎊 Special Date (YYYY-MM-DD)")
-image = st.sidebar.file_uploader("📷 Upload Image", type=["jpg", "png","webp"])
+image = st.sidebar.file_uploader("📷 Upload Image", type=["jpg", "png", "webp"])
 
 # Save the record
 if st.sidebar.button("Save"):
@@ -87,7 +61,7 @@ if st.sidebar.button("Save"):
 
         # Success notification
         st.toast("✅ Saved successfully!", icon="🎉")
-        time.sleep(5)  # Keep toast visible for 5 seconds
+        time.sleep(2)  # Keep toast visible for 2 seconds
 
         # Refresh the app
         st.rerun()
@@ -96,12 +70,24 @@ if st.sidebar.button("Save"):
 
 # Show stored data
 st.subheader("📌 All Loved Ones")
-for _, row in df.iterrows():
-    st.write(f"**{row['Name']}** - ⭐ {row['currentdate']} -  {row['Special Date']}")
-    if isinstance(row['Image'], str) and row['Image'] and os.path.exists(row['Image']):
-        image = Image.open(row['Image'])
-        image = image.resize((800, 400))  # Resize image
-        st.image(image, caption=row['Name'], use_container_width=True)
+for index, row in df.iterrows():
+    col1, col2 = st.columns([4, 1])  # Create two columns: Name+Details | Delete Button
+
+    with col1:
+        st.write(f"**{row['Name']}** - ⭐ {row['currentdate']} -  {row['Special Date']}")
+        if isinstance(row['Image'], str) and row['Image'] and os.path.exists(row['Image']):
+            image = Image.open(row['Image'])
+            image = image.resize((800, 400))  # Resize image
+            st.image(image, caption=row['Name'], use_container_width=True)
+
+    with col2:
+        if st.button(f"🗑️ Delete {row['Name']}", key=f"delete_{index}"):
+            df = df.drop(index)  # Remove the entry
+            save_data(df)  # Save updated data
+
+            st.toast(f"✅ {row['Name']} deleted successfully!", icon="🗑️")
+            time.sleep(2)  # Pause to show success message
+            st.rerun()  # Refresh the app
 
 # Search Feature
 search_query = st.text_input("🔍 Search for a Loved One")
